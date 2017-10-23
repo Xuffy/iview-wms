@@ -1,7 +1,8 @@
 <template>
   <div class="menu">
-    <Menu theme="dark" :active-name="activeName" :open-names="activeOpen" :accordion="true">
-      <Submenu v-for="(item,index) in routerList" :key="index" :name="index">
+    <Menu theme="dark" v-if="activeName || activeOpen.length" :active-name="activeName" :open-names="activeOpen"
+          :accordion="true">
+      <Submenu v-for="(item,index) in routerList" :key="index" :name="index + ''">
         <template slot="title">
           <Icon type="ios-paper"></Icon>
           <span v-text="item.name"></span>
@@ -20,26 +21,25 @@
 </template>
 
 <script>
-  import _ from 'underscore'
-  import {routerMap} from '../../router'
+  import {routerMap} from 'service/router'
+
   export default {
     name: 'header',
     data () {
       return {
-        routerList: new Array(),
+        routerList: [],
         activeName: null,
-        activeOpen: null
+        activeOpen: []
       }
     },
-    created(){
-      var _this = this;
+    mounted(){
+      let _this = this;
       routerMap.forEach(value => {
         // 判断路由是否显示
         if (!value.hidden) {
           _this.routerList.push(value)
-          console.log(_this.routerList)
         }
-      })
+      });
 
       this.updateMenuActive()
     },
@@ -47,8 +47,11 @@
       updateMenuActive(){
         let _this = this;
         if (!this.$route.name) {
+          this.activeOpen = ['0'];
           return;
         }
+
+        _this.activeOpen = [];
 
         this.routerList.forEach((value, index) => {
           if (value.path === this.$route.matched[0].path) {
@@ -58,9 +61,9 @@
               }
             })
           }
-        })
+        });
 
-        _this.activeOpen = [parseInt(_this.activeName[0] || 0)];
+        _this.activeOpen.push(_this.activeName[0] || '0');
       }
     },
     watch: {
@@ -98,6 +101,7 @@
 
   .menu .ivu-menu-dark.ivu-menu-vertical .ivu-menu-opened {
     background-color: #292929;
+    /*background-color: #333333;*/
   }
 
   .menu .ivu-menu-dark.ivu-menu-vertical .ivu-menu-opened .ivu-menu-submenu-title {
@@ -106,7 +110,7 @@
 
   .menu .ivu-menu-dark.ivu-menu-vertical .ivu-menu-submenu .ivu-menu-item-active,
   .menu .ivu-menu-dark.ivu-menu-vertical .ivu-menu-submenu .ivu-menu-item-active:hover {
-    /*background-color: #4a4947!important;*/
-    background-color: #292929 !important;
+    background-color: #1f1f1f !important;
+    position: relative;
   }
 </style>

@@ -1,6 +1,6 @@
 <template>
   <div>
-    asdasdasd
+    introduce/index.vue
   </div>
 </template>
 
@@ -11,6 +11,9 @@
       return {}
     },
     created(){
+      this.ajax.post('/store/user/loginUser').then(function (data) {
+        console.log(data,'/////////')
+      });
 //      console.log(this.$route)
     }
   }

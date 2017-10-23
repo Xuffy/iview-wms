@@ -1,16 +1,17 @@
 require('./check-versions')()
 
-var config = require('../config')
-if (!process.env.NODE_ENV) {
-  process.env.NODE_ENV = JSON.parse(config.dev.env.NODE_ENV)
-}
+process.env.NODE_ENV = 'local';
 
-var opn = require('opn')
-var path = require('path')
-var express = require('express')
-var webpack = require('webpack')
-var proxyMiddleware = require('http-proxy-middleware')
-var webpackConfig = require('./webpack.dev.conf')
+var config = require('../config')
+  , opn = require('opn')
+  , path = require('path')
+  , express = require('express')
+  , webpack = require('webpack')
+  , proxyMiddleware = require('http-proxy-middleware')
+  , webpackConfig = require('./webpack.dev.conf')
+  , os = require('os')
+  , iptable = {},
+  ifaces = os.networkInterfaces();
 
 // default port where dev server listens for incoming traffic
 var port = process.env.PORT || config.dev.port
@@ -29,13 +30,13 @@ var devMiddleware = require('webpack-dev-middleware')(compiler, {
 })
 
 var hotMiddleware = require('webpack-hot-middleware')(compiler, {
-  log: false,
-  heartbeat: 2000
+  log: () => {
+  }
 })
 // force page reload when html-webpack-plugin template changes
 compiler.plugin('compilation', function (compilation) {
   compilation.plugin('html-webpack-plugin-after-emit', function (data, cb) {
-    hotMiddleware.publish({ action: 'reload' })
+    hotMiddleware.publish({action: 'reload'})
     cb()
   })
 })
@@ -44,7 +45,7 @@ compiler.plugin('compilation', function (compilation) {
 Object.keys(proxyTable).forEach(function (context) {
   var options = proxyTable[context]
   if (typeof options === 'string') {
-    options = { target: options }
+    options = {target: options}
   }
   app.use(proxyMiddleware(options.filter || context, options))
 })
@@ -57,34 +58,52 @@ app.use(devMiddleware)
 
 // enable hot-reload and state-preserving
 // compilation error display
-app.use(hotMiddleware)
+app.use(hotMiddleware);
 
 // serve pure static assets
-var staticPath = path.posix.join(config.dev.assetsPublicPath, config.dev.assetsSubDirectory)
-app.use(staticPath, express.static('./static'))
+var staticPath = path.posix.join(config.dev.assetsPublicPath, config.dev.assetsSubDirectory);
+app.use(staticPath, express.static('./static'));
 
-var uri = 'http://localhost:' + port
+var uri = 'http://localhost:' + port;
 
-var _resolve
+var _resolve;
 var readyPromise = new Promise(resolve => {
   _resolve = resolve
-})
+});
 
-console.log('> Starting dev server...')
+console.log('> Starting local server...');
+
+// 获取本机IP地址
+for (var dev in ifaces) {
+  ifaces[dev].forEach(function (details, alias) {
+    if (details.family == 'IPv4') {
+      iptable[dev + (alias ? ':' + alias : '')] = details.address;
+    }
+  });
+}
 devMiddleware.waitUntilValid(() => {
-  console.log('> Listening at ' + uri + '\n')
+  var localIp = '';
+  for (var k in iptable) {
+    if (iptable[k].indexOf('192.168') > -1) {
+      localIp = iptable[k];
+    }
+  }
+  localIp = 'http://' + localIp + ':' + port;
+
+  console.log('> Listening at ' + localIp + '\n');
   // when env is testing, don't need open it
+
   if (autoOpenBrowser && process.env.NODE_ENV !== 'testing') {
-    opn(uri)
+    opn(localIp)
   }
   _resolve()
-})
+});
 
-var server = app.listen(port)
+var server = app.listen(port);
 
 module.exports = {
   ready: readyPromise,
   close: () => {
     server.close()
   }
-}
+};

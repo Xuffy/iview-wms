@@ -1,6 +1,6 @@
 <template>
   <div>
-    asdasdasd
+    index.vue
   </div>
 </template>
 

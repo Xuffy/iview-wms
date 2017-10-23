@@ -1,6 +1,6 @@
 <template>
   <div>
-    asdasdasd
+    introduce/structure.vue
   </div>
 </template>
 

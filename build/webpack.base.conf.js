@@ -2,6 +2,16 @@ var path = require('path')
 var utils = require('./utils')
 var config = require('../config')
 var vueLoaderConfig = require('./vue-loader.conf')
+var webpack = require('webpack')
+var BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+
+var plugins = [],
+  providePlugin = {
+    _: resolve('node_modules/underscore/underscore.js')
+  };
+
+plugins.push(new webpack.ProvidePlugin(providePlugin));
+process.env.NODE_ENV !== 'local' && plugins.push(new BundleAnalyzerPlugin());
 
 function resolve(dir) {
   return path.join(__dirname, '..', dir)
@@ -14,7 +24,7 @@ module.exports = {
   output: {
     path: config.build.assetsRoot,
     filename: '[name].js',
-    publicPath: process.env.NODE_ENV === 'production'
+    publicPath: process.env.NODE_ENV !== 'local'
       ? config.build.assetsPublicPath
       : config.dev.assetsPublicPath
   },
@@ -23,6 +33,9 @@ module.exports = {
     alias: {
       'vue$': 'vue/dist/vue.esm.js',
       '@': resolve('src'),
+      'assets': resolve('src/assets'),
+      'service': resolve('src/service'),
+      'components': resolve('src/components'),
     }
   },
   module: {
@@ -33,9 +46,9 @@ module.exports = {
         options: vueLoaderConfig
       },
       /*{
-        test: /\.less$/,
-        loader: "style-loader!css-loader!less-loader",
-      },*/
+       test: /\.less$/,
+       loader: "style-loader!css-loader!less-loader",
+       },*/
       {
         test: /\.js$/,
         loader: 'babel-loader',
@@ -64,7 +77,14 @@ module.exports = {
           limit: 10000,
           name: utils.assetsPath('fonts/[name].[hash:7].[ext]')
         }
+      },
+      {test: /iview.src.*?js$/, loader: 'babel-loader'},
+      {
+        test: resolve('node_modules/underscore/underscore.js'),
+        loader: 'exports-loader?window._!script-loader'
       }
     ]
-  }
+  },
+  plugins: plugins
 }
+;
